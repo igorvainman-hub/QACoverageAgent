@@ -89,6 +89,9 @@ def main() -> int:
                 print("[WARNING] Suspicious system overview update rejected")
             else:
                 STATE_DIR.mkdir(exist_ok=True); OVERVIEW_FILE.write_text(updated, encoding="utf-8"); overview = updated
+        if matrix.gaps and not valid:
+            print(f"  [WARNING] All generated cases were invalid — {relative} will be re-analyzed next run.")
+            continue
         state["processed_documents"][relative] = {"content_hash": digest, "processed_at": datetime.now(timezone.utc).isoformat(), "test_case_ids_generated": tcids}
         write_state(state)
         print(f"  Generated cases: {len(tcids)}" + (f" ({tcids[0]} .. {tcids[-1]})" if tcids else ""))
