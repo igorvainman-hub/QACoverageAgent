@@ -52,6 +52,8 @@ htmlcov/
 
 # Project state (auto-generated)
 .state/
+!.state/.gitkeep
 checklist.csv
 docs/
+!docs/.gitkeep
 codex_project_plan.md
