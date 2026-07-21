@@ -75,3 +75,37 @@ def test_non_retryable_errors_raise_immediately(monkeypatch):
         client.structured(step="test", model=ExampleModel, system="sys", data="input")
 
     assert client.client.chat.completions.calls == 1
+
+
+def test_normalizes_schema_additional_properties():
+    client = LLMClient(api_key="test")
+    schema = {
+        "title": "ExampleModel",
+        "type": "object",
+        "properties": {
+            "value": {"type": "string"}
+        }
+    }
+
+    normalized = client._normalize_schema(schema)
+
+    assert normalized["additionalProperties"] is False
+    assert normalized["properties"]["value"] == {"type": "string"}
+    assert normalized["required"] == ["value"]
+
+
+def test_normalizes_schema_required_for_optional_fields():
+    client = LLMClient(api_key="test")
+    schema = {
+        "title": "ExampleModel",
+        "type": "object",
+        "properties": {
+            "required_field": {"type": "string"},
+            "optional_field": {"type": "string"}
+        },
+        "required": ["required_field"]
+    }
+
+    normalized = client._normalize_schema(schema)
+
+    assert normalized["required"] == ["required_field", "optional_field"]

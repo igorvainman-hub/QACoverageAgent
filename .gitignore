@@ -51,5 +51,7 @@ htmlcov/
 .hypothesis/
 
 # Project state (auto-generated)
-# .state/
-# checklist.csv
+.state/
+checklist.csv
+docs/
+codex_project_plan.md

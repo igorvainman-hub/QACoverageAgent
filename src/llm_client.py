@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import time
 from typing import TypeVar
 
@@ -19,7 +20,7 @@ class LLMClient:
 
     def structured(self, *, step: str, model: type[T], system: str, data: str, context: str = "") -> T:
         """Call Structured Outputs and retry only transient API failures with backoff."""
-        schema = model.model_json_schema()
+        schema = self._normalize_schema(model.model_json_schema())
         messages = [
             {"role": "system", "content": f"{INJECTION_RULE}\n\n{system}"},
             {"role": "user", "content": f"{context}\n<document_content>\n{data}\n</document_content>"},
@@ -60,3 +61,17 @@ class LLMClient:
                 raise RuntimeError(f"LLM response failed schema validation at step {step}: {error}") from error
 
         raise RuntimeError(f"LLM call failed at step {step} after 3 attempts: {last_error}")
+
+    def _normalize_schema(self, schema: dict) -> dict:
+        schema = copy.deepcopy(schema)
+        if schema.get("type") == "object":
+            if "additionalProperties" not in schema:
+                schema["additionalProperties"] = False
+            if "properties" in schema:
+                schema["required"] = list(schema["properties"].keys())
+        for key, value in list(schema.items()):
+            if isinstance(value, dict):
+                schema[key] = self._normalize_schema(value)
+            elif isinstance(value, list):
+                schema[key] = [self._normalize_schema(item) if isinstance(item, dict) else item for item in value]
+        return schema
