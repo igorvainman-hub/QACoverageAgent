@@ -1,2 +1,1 @@
 TCID,Test Summary,Description,Test Type,Test Repository Path,Label,Action,Data,Expected Result
-QA-001,Sample test case,Example description,Manual,TestProject/Feature/Scenario,smoke,Open application and navigate to scenario,,Application opens and scenario is visible
