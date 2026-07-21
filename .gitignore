@@ -56,4 +56,4 @@ htmlcov/
 checklist.csv
 docs/
 !docs/.gitkeep
-codex_project_plan.md
+llm_system_description.md

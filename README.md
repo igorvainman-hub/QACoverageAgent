@@ -25,19 +25,13 @@ QA_BASE_PATH=MyProject
 QA_TCID_PREFIX=QA
 ```
 
-3. Скопируйте шаблон `checklist.example.csv` в `checklist.csv`:
-
-```bash
-copy checklist.example.csv checklist.csv
-```
-
-4. Запустите анализ:
+3. Запустите анализ:
 
 ```bash
 python src/main.py
 ```
 
-5. Чтобы обработать один документ:
+4. Чтобы обработать один документ:
 
 ```bash
 python src/main.py --doc docs/auth_feature.md
@@ -46,7 +40,6 @@ python src/main.py --doc docs/auth_feature.md
 ## Требования
 - Python 3.9+
 - OpenAI API Key
-- `checklist.csv` в корне проекта
 - `docs/` с описанием функций и сценариев
 
 ## Структура
@@ -54,8 +47,5 @@ python src/main.py --doc docs/auth_feature.md
 - `docs/` — документы для анализа
 - `checklist.csv` — Xray-совместимый список тест-кейсов
 - `checklist.example.csv` — git-совместимый шаблон `checklist`
-- `.state/` — служебные данные
+- `.state/` — служебные данные 
 - `tests/` — unit-тесты
-
-## Примечание
-Файл `DEVELOPMENT.md` удалён, документация сведена к этому краткому `README.md`.
