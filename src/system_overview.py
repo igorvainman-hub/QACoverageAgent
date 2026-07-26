@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from llm_client import LLMClient
-from schemas import GeneratedTestCase
+from src.llm_client import LLMClient
+from src.schemas import GeneratedTestCase
 
 DEFAULT_OVERVIEW = "# System Overview\n"
 

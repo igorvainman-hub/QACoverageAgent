@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-from llm_client import LLMClient
-from schemas import CoverageGap, GeneratedTestCases
+from src.llm_client import LLMClient
+from src.schemas import CoverageGap, GeneratedTestCases
 
 
 def design_tests(client: LLMClient, gaps: list[CoverageGap], base_path: str) -> GeneratedTestCases:

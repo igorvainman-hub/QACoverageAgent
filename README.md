@@ -25,7 +25,7 @@ QA_BASE_PATH=MyProject
 QA_TCID_PREFIX=QA
 ```
 
-3. Запустите анализ:
+3. Запустите полный анализ:
 
 ```bash
 python src/main.py
@@ -36,6 +36,21 @@ python src/main.py
 ```bash
 python src/main.py --doc docs/auth_feature.md
 ```
+
+5. Чтобы не записывать новые тест-кейсы, а только посмотреть результат:
+
+```bash
+python src/main.py --dry-run
+```
+
+## Переменные окружения
+- `OPENAI_API_KEY` — ключ OpenAI для генерации тест-кейсов
+- `QA_BASE_PATH` — базовый путь для Test Repository Path в Xray
+- `QA_TCID_PREFIX` — префикс TCID, например `QA`
+
+## Примечания
+- Проект читает документы из `docs/` и сохраняет состояние в `.state/`
+- Если документ не изменился, он будет пропущен при следующем запуске
 
 ## Требования
 - Python 3.9+
