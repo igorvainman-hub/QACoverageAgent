@@ -51,8 +51,7 @@ htmlcov/
 .hypothesis/
 
 # Project state (auto-generated)
-.state/*
-!.state/.gitkeep
+.state/
 checklist.csv
 docs/*
 !docs/.gitkeep
