@@ -51,9 +51,9 @@ htmlcov/
 .hypothesis/
 
 # Project state (auto-generated)
-.state/
+.state/*
 !.state/.gitkeep
 checklist.csv
-docs/
+docs/*
 !docs/.gitkeep
 llm_system_description.md
