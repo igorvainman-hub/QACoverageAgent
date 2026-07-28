@@ -14,12 +14,12 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from config import load_runtime_config
-from coverage_matrix import checklist_summary, find_gaps
 from csv_writer import append_cases, validate_case
 from document_parser import parse_document
 from llm_client import LLMClient
-from system_overview import load_overview, update_overview
-from test_designer import design_tests
+from src.agents.coverage_matrix import checklist_summary, find_gaps
+from src.agents.overview import load_overview, update_overview
+from src.agents.test_designer import design_tests
 
 ROOT = Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
