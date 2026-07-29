@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from functools import partial
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -17,7 +18,7 @@ from llm_client import LLMClient
 from src.agents.coverage_matrix import checklist_summary, find_gaps
 from src.agents.overview import load_overview, update_overview
 from src.agents.test_designer import design_tests
-from src.app.pipeline import read_state, run_document_pipeline, write_state
+from src.app.pipeline import read_state, run_document_pipeline
 
 ROOT = Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
@@ -39,9 +40,18 @@ def build_parser() -> argparse.ArgumentParser:
 def files_for(args: argparse.Namespace) -> list[Path]:
     if args.doc:
         candidate = DOCS / args.doc
-        if not candidate.is_file(): raise FileNotFoundError(f"Document not found under docs/: {args.doc}")
+        if not candidate.is_file():
+            raise FileNotFoundError(f"Document not found under docs/: {args.doc}")
         return [candidate]
-    return [path for path in DOCS.rglob("*") if path.is_file() and path.suffix.lower() in SUPPORTED and not path.name.startswith("_") and path.name.lower() != "readme.md"]
+
+    return [
+        path
+        for path in DOCS.rglob("*")
+        if path.is_file()
+        and path.suffix.lower() in SUPPORTED
+        and not path.name.startswith("_")
+        and path.name.lower() != "readme.md"
+    ]
 
 
 def process_document(document: Path, *, client: object, config: object, state: dict, overview: str, dry_run: bool, verbose: bool) -> tuple[str, dict]:
@@ -54,7 +64,7 @@ def process_document(document: Path, *, client: object, config: object, state: d
         dry_run=dry_run,
         verbose=verbose,
         parse_document=parse_document,
-        find_gaps=lambda client_arg, sections, overview_arg, checklist_arg: find_gaps(client_arg, sections, overview_arg, checklist_summary(CHECKLIST)),
+        find_gaps=partial(find_gaps, checklist=checklist_summary(CHECKLIST)),
         design_tests=design_tests,
         validate_case=validate_case,
         append_cases=append_cases,
