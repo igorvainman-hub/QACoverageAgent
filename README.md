@@ -31,10 +31,10 @@ QA_TCID_PREFIX=QA
 python -m src.main
 ```
 
-4. Обработайте только один документ:
+4. Обработайте только один документ через явный режим:
 
 ```bash
-python -m src.main --doc docs/payment_feature.md
+python -m src.main generate-docs --doc payment_feature.md
 ```
 
 5. Выполните сухой прогон без записи новых кейсов:
@@ -48,6 +48,40 @@ python -m src.main --dry-run
 ```bash
 python -m src.main --verbose
 ```
+
+## Генерация API-тестов
+
+Для автоматической генерации API-автотестов:
+
+1. добавьте метку `api` в поле `Label` нужного кейса в `checklist.csv`;
+2. передайте JSON-спецификацию OpenAPI в команду:
+
+```bash
+python -m src.main generate-tests --openapi https://service.example/v3/api-docs
+python -m src.main generate-tests --openapi docs/openapi.json --output-dir automation/api
+python -m src.main generate-tests --openapi docs/openapi.json --dry-run --verbose
+```
+
+Что делает режим:
+- читает OpenAPI-спецификацию;
+- создаёт клиентов по `tags` из спецификации;
+- генерирует Playwright-спеки;
+- при необходимости добавляет заготовку `fixtures/auth.ts` и `coverage-report.md`.
+
+Ограничения:
+- поддерживаются только JSON-спецификации OpenAPI; YAML сначала нужно конвертировать в JSON;
+- для URL-спецификаций разрешены только публично маршрутизируемые HTTP(S)-адреса;
+- loopback, private, link-local, reserved IP-адреса и redirects блокируются;
+- для внутреннего API лучше сохранить JSON-файл локально и передать путь к нему;
+- если API-кейсов не найдено, команда завершится успешно без создания файлов.
+
+`generate-docs` — явный режим для генерации кейсов по одному документу:
+
+```bash
+python -m src.main generate-docs --doc payment_feature.md
+```
+
+Это отдельный CLI-режим для документационного pipeline. Он читается как "сгенерировать Xray-кейсы из одного markdown-файла" и не требует дополнительных команд для запуска.
 
 ## Переменные окружения
 - OPENAI_API_KEY — ключ OpenAI для генерации тест-кейсов
