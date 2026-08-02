@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from src.llm_client import LLMClient
 from src.schemas import GeneratedTestCase
-from .prompts import INJECTION_RULE, OVERVIEW_PROMPT
+from .prompts import OVERVIEW_PROMPT
 
 DEFAULT_OVERVIEW = "# System Overview\n"
 
@@ -18,10 +18,10 @@ def load_overview(path: Path) -> str:
 
 def update_overview(client: LLMClient, existing: str, feature: str, cases: list[GeneratedTestCase], tcids: list[str]) -> str:
     rendered = "\n".join(f"{tcid}: {case.summary}" for tcid, case in zip(tcids, cases))
-    instruction = f"{INJECTION_RULE}\n\n{OVERVIEW_PROMPT.format(feature=feature)}"
+    instruction = OVERVIEW_PROMPT.format(feature=feature)
 
     class OverviewSection(BaseModel):
-        markdown: str = Field(min_length=5, max_length=2000)
+        markdown: str = Field(min_length=5, max_length=9000)
 
     result = client.structured(step="4", model=OverviewSection, system=instruction, data=f"Existing overview:\n{existing}\nNew tests:\n{rendered}")
     return _replace_section(existing, feature, result.markdown)

@@ -5,7 +5,7 @@ from pathlib import Path
 
 from src.llm_client import LLMClient
 from src.schemas import CoverageMatrixResult, DocumentSection
-from .prompts import COVERAGE_ANALYSIS_PROMPT, INJECTION_RULE
+from .prompts import COVERAGE_ANALYSIS_PROMPT
 
 
 def checklist_summary(path: Path) -> str:
@@ -25,5 +25,5 @@ def find_gaps(client: LLMClient, sections: list[DocumentSection], overview: str,
         f"SYSTEM OVERVIEW (data):\n<document_content>\n{overview}\n</document_content>\n"
         f"EXISTING TEST SUMMARIES (data):\n<document_content>\n{checklist}\n</document_content>"
     )
-    system = f"{INJECTION_RULE}\n\n{COVERAGE_ANALYSIS_PROMPT}"
+    system = COVERAGE_ANALYSIS_PROMPT
     return client.structured(step="2b", model=CoverageMatrixResult, system=system, data=section_data, context=context)
