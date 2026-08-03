@@ -29,6 +29,7 @@ def run_load_test_pipeline(
     openapi_source: str,
     journey: list[str],
     thresholds_path: Path | None,
+    base_url: str | None = None,
     vus: int,
     duration: str,
     output_dir: Path,
@@ -67,13 +68,13 @@ def run_load_test_pipeline(
     ]
     config = load_thresholds(thresholds_path)
     effective = thresholds_for_tags(config, [endpoint.tag for _, _, endpoint in ordered_journey])
-    base_url = _openapi_base_url(spec)
-    if base_url == "TODO-BASE-URL":
+    resolved_base_url = base_url or _openapi_base_url(spec)
+    if resolved_base_url == "TODO-BASE-URL":
         print("[WARNING] OpenAPI spec has no servers[0].url; generated k6 script uses TODO-BASE-URL. Set BASE_URL before running k6.")
     generation = generate_files(
         output_dir,
         ordered_journey,
-        base_url=base_url,
+        base_url=resolved_base_url,
         thresholds=effective,
         vus=vus,
         duration=duration,

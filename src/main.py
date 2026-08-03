@@ -53,6 +53,7 @@ def build_parser() -> argparse.ArgumentParser:
     load_parser.add_argument("--openapi", required=True, help="local JSON spec or URL (usually GET /v3/api-docs or /swagger.json)")
     load_parser.add_argument("--journey", action="append", required=True, help="comma-separated TCIDs in execution order; repeat for multiple journeys")
     load_parser.add_argument("--thresholds", help="path to k6 thresholds JSON")
+    load_parser.add_argument("--base-url", help="override API base URL used in generated k6 scripts")
     load_parser.add_argument("--vus", type=int, default=50, help="steady-state virtual users (default: 50)")
     load_parser.add_argument("--duration", default="2m", help="steady-state duration (default: 2m)")
     load_parser.add_argument("--output-dir", default="automation/load", help="output directory relative to project root")
@@ -143,6 +144,7 @@ def main() -> int:
                 openapi_source=args.openapi,
                 journeys=args.journey,
                 thresholds_path=ROOT / args.thresholds if args.thresholds else None,
+                base_url=args.base_url,
                 vus=args.vus,
                 duration=args.duration,
                 output_dir=ROOT / args.output_dir,

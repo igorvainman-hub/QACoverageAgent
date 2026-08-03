@@ -65,6 +65,25 @@ def test_k6_generator_renders_complete_javascript_with_placeholder_thresholds():
     assert "Data-dependency TODOs: 1" in generation.files[Path("automation/load/journeys/qa-101-to-qa-110.md")]
 
 
+def test_k6_generator_omits_placeholder_warning_for_real_sla_thresholds():
+    endpoints = _endpoints()
+    threshold = EffectiveThresholds(values=ThresholdValues(p95=300, p99=700, error_rate=0.005), sources=["payments"], is_placeholder=False)
+    generation = generate_k6_journey_files(
+        Path("automation/load"),
+        [("QA-101", _case(), endpoints[("POST", "/orders/{orderId}")]), ("QA-110", _case("Read payment"), endpoints[("GET", "/payments")])],
+        base_url="https://api.example.test",
+        thresholds=threshold,
+        vus=50,
+        duration="2m",
+    )
+    script = generation.files[Path("automation/load/journeys/qa-101-to-qa-110.js")]
+    report = generation.files[Path("automation/load/journeys/qa-101-to-qa-110.md")]
+
+    assert "PLACEHOLDER THRESHOLDS" not in script
+    assert "placeholder thresholds must be replaced" not in report
+    assert "p95: 300ms; p99: 700ms; error rate: 0.005" in report
+
+
 def test_thresholds_fall_back_to_default_when_no_tag_matches():
     config = ThresholdConfig(
         default=ThresholdValues(p95=500, p99=1000, error_rate=0.01),
@@ -146,6 +165,39 @@ def test_batch_pipeline_labels_dry_run_summary_as_would_generate():
 
     assert status == 0
     assert output[-1] == "Load-test journeys: 1/1 would generate successfully."
+
+
+def test_pipeline_prefers_cli_base_url_override(capsys):
+    endpoints = _endpoints()
+    spec = {"info": {"title": "Orders", "version": "1"}, "paths": {"/payments": {"get": {"tags": ["payments"], "responses": {"200": {"description": "OK"}}}}}, "servers": [{"url": "https://from-spec.example"}]}
+    generated: dict[str, object] = {}
+
+    def generate_files(*args, **kwargs):
+        generated.update(kwargs)
+        return SimpleNamespace(files={}, slug="qa-101")
+
+    status = run_load_test_pipeline(
+        client=object(),
+        checklist_path=Path("checklist.csv"),
+        openapi_source="unused.json",
+        journey=["QA-101"],
+        thresholds_path=None,
+        vus=1,
+        duration="1m",
+        output_dir=Path("automation/load"),
+        base_path="Project",
+        base_url="https://from-cli.example",
+        dry_run=True,
+        read_cases=lambda _: [("QA-101", _case())],
+        load_spec=lambda _: spec,
+        parse_spec=lambda _: endpoints,
+        match=lambda *args: EndpointMatchResult(matches=[EndpointMatch(tcid="QA-101", matched=True, method="GET", path="/payments", confidence="high", reasoning="Exact")]),
+        generate_files=generate_files,
+    )
+
+    assert status == 0
+    assert generated["base_url"] == "https://from-cli.example"
+    assert "OpenAPI spec has no servers[0].url" not in capsys.readouterr().out
 
 
 def test_pipeline_warns_when_openapi_has_no_server(capsys):
