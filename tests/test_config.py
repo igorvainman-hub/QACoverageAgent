@@ -37,8 +37,9 @@ def test_load_runtime_config_rejects_invalid_prefix():
 
 def test_build_parser_supports_common_cli_flags():
     parser = build_parser()
-    args = parser.parse_args(["--doc", "auth.md", "--dry-run", "--verbose"])
+    args = parser.parse_args(["generate-docs", "--doc", "auth.md", "--dry-run", "--verbose"])
 
+    assert args.command == "generate-docs"
     assert args.doc == "auth.md"
     assert args.dry_run is True
     assert args.verbose is True

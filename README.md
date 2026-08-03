@@ -83,6 +83,29 @@ python -m src.main generate-docs --doc payment_feature.md
 
 Это отдельный CLI-режим для документационного pipeline. Он читается как "сгенерировать Xray-кейсы из одного markdown-файла" и не требует дополнительных команд для запуска.
 
+## Генерация k6 load-тестов
+
+`generate-load-tests` создаёт один k6-скрипт для линейного API journey. Укажите TCID в точном порядке выполнения: они должны существовать в `checklist.csv` и иметь метку `api`.
+
+```bash
+python -m src.main generate-load-tests --openapi docs/openapi.json --journey QA-101,QA-104,QA-110
+python -m src.main generate-load-tests --openapi docs/openapi.json --journey QA-101,QA-104 --thresholds k6-thresholds.json --vus 50 --duration 2m --output-dir automation/load
+python -m src.main generate-load-tests --openapi docs/openapi.json --journey QA-101,QA-104 --journey QA-201,QA-220
+```
+
+Каждый повторяемый `--journey` создаёт независимый сценарий. Ошибка одного сценария не отменяет остальные, но команда завершится с ненулевым кодом, если хотя бы один journey не сгенерирован. Результат — `automation/load/journeys/<journey>.js` и краткий Markdown-отчёт. Перед запуском k6 задайте `BASE_URL`, если URL из `servers[0].url` OpenAPI не подходит. В скрипте оставляются TODO для path parameters и зависимостей данных между шагами; автоматическое связывание ответа одного запроса с параметрами следующего не выполняется.
+
+Если `--thresholds` не передан, в скрипт добавляется заметный комментарий о placeholder SLA (p95 500ms, p99 1000ms, error rate 1%). Формат файла thresholds:
+
+```json
+{
+  "default": { "p95": 500, "p99": 1000, "error_rate": 0.01 },
+  "by_tag": { "payments": { "p95": 300, "p99": 700, "error_rate": 0.005 } }
+}
+```
+
+Для matching используется тот же `match_endpoints()` API-агента и вызывается только для TCID journey. Это даёт единый источник правды и ту же валидацию endpoint’ов, но каждый запуск `generate-load-tests` выполняет отдельный LLM-вызов и расходует API-кредиты.
+
 ## Переменные окружения
 - OPENAI_API_KEY — ключ OpenAI для генерации тест-кейсов
 - QA_BASE_PATH — базовый путь для Test Repository Path в Xray

@@ -18,6 +18,16 @@ def test_generate_docs_command_is_explicitly_supported():
     assert args.dry_run
 
 
+def test_generate_load_tests_command_is_supported():
+    args = main.build_parser().parse_args(
+        ["generate-load-tests", "--openapi", "docs/openapi.json", "--journey", "QA-101,QA-104", "--journey", "QA-201", "--vus", "10"]
+    )
+
+    assert args.command == "generate-load-tests"
+    assert args.journey == ["QA-101,QA-104", "QA-201"]
+    assert args.vus == 10
+
+
 def test_process_document_marks_document_as_processed(tmp_path, monkeypatch):
     document = tmp_path / "auth.md"
     document.write_text("# Auth\n", encoding="utf-8")
