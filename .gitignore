@@ -55,4 +55,6 @@ htmlcov/
 checklist.csv
 docs/*
 !docs/.gitkeep
+automation/
+
 

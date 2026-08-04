@@ -54,13 +54,18 @@ python -m src.main generate-docs --verbose
 Для автоматической генерации API-автотестов:
 
 1. добавьте метку `api` в поле `Label` нужного кейса в `checklist.csv`;
-2. передайте JSON-спецификацию OpenAPI в команду:
+2. передайте JSON-спецификацию OpenAPI в команду;
+3. для локальной проверки лучше использовать файл `docs/openapi.json`, а не публичный URL.
+
+Примеры запуска:
 
 ```bash
-python -m src.main generate-tests --openapi https://service.example/v3/api-docs
+python -m src.main generate-tests --openapi https://service.example/v3/api-docs ()
 python -m src.main generate-tests --openapi docs/openapi.json --output-dir automation/api
 python -m src.main generate-tests --openapi docs/openapi.json --dry-run --verbose
 ```
+
+Для реального прогона `checklist.csv` должен содержать хотя бы один кейс с меткой `API` (или `Smoke;API`) — иначе генератор завершится успешно, но файлов не создаст.
 
 Что делает режим:
 - читает OpenAPI-спецификацию;
