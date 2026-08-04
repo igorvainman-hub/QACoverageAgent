@@ -21,6 +21,7 @@ from src.agents.test_designer import design_tests
 from src.agents.api_test_generator.checklist_reader import api_labeled_cases, read_checklist_cases
 from src.agents.api_test_generator.openapi_parser import OpenAPIParseError
 from src.agents.api_test_generator.pipeline import run_api_test_pipeline
+from src.agents.load_test_generator.pipeline import LoadTestGenerationError, run_load_test_journeys_pipeline
 from src.app.pipeline import read_state, run_document_pipeline
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -34,7 +35,7 @@ SUPPORTED = {".md", ".txt", ".doc", ".csv"}
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate Xray-ready tests for genuine documentation coverage gaps.")
-    subparsers = parser.add_subparsers(dest="command")
+    subparsers = parser.add_subparsers(dest="command", required=True)
     docs_parser = subparsers.add_parser("generate-docs", help="generate manual Xray test cases from documentation")
     docs_parser.add_argument("--doc", help="one document path relative to docs/")
     docs_parser.add_argument("--dry-run", action="store_true")
@@ -48,6 +49,16 @@ def build_parser() -> argparse.ArgumentParser:
     tests_parser.add_argument("--output-dir", default="automation/api", help="output directory relative to project root")
     tests_parser.add_argument("--dry-run", action="store_true")
     tests_parser.add_argument("--verbose", action="store_true")
+    load_parser = subparsers.add_parser("generate-load-tests", help="generate a k6 load-test script for one API journey")
+    load_parser.add_argument("--openapi", required=True, help="local JSON spec or URL (usually GET /v3/api-docs or /swagger.json)")
+    load_parser.add_argument("--journey", action="append", required=True, help="comma-separated TCIDs in execution order; repeat for multiple journeys")
+    load_parser.add_argument("--thresholds", help="path to k6 thresholds JSON")
+    load_parser.add_argument("--base-url", help="override API base URL used in generated k6 scripts")
+    load_parser.add_argument("--vus", type=int, default=50, help="steady-state virtual users (default: 50)")
+    load_parser.add_argument("--duration", default="2m", help="steady-state duration (default: 2m)")
+    load_parser.add_argument("--output-dir", default="automation/load", help="output directory relative to project root")
+    load_parser.add_argument("--dry-run", action="store_true")
+    load_parser.add_argument("--verbose", action="store_true")
     return parser
 
 
@@ -109,6 +120,8 @@ def main() -> int:
     if args.command == "generate-tests" and not api_labeled_cases(read_checklist_cases(CHECKLIST)):
         print("No test cases labeled 'api' found in checklist.csv — nothing to generate")
         return 0
+    if args.command == "generate-load-tests" and args.vus <= 0:
+        parser.error("--vus must be greater than zero.")
     config, client = setup_runtime(parser, args)
     if args.command == "generate-tests":
         try:
@@ -122,6 +135,23 @@ def main() -> int:
                 dry_run=args.dry_run,
             )
         except OpenAPIParseError as error:
+            parser.error(str(error))
+    if args.command == "generate-load-tests":
+        try:
+            return run_load_test_journeys_pipeline(
+                client=client,
+                checklist_path=CHECKLIST,
+                openapi_source=args.openapi,
+                journeys=args.journey,
+                thresholds_path=ROOT / args.thresholds if args.thresholds else None,
+                base_url=args.base_url,
+                vus=args.vus,
+                duration=args.duration,
+                output_dir=ROOT / args.output_dir,
+                base_path=config.base_path,
+                dry_run=args.dry_run,
+            )
+        except (OpenAPIParseError, LoadTestGenerationError, ValueError) as error:
             parser.error(str(error))
     state = read_state(STATE_FILE)
     overview = load_overview(OVERVIEW_FILE)

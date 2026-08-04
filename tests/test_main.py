@@ -10,12 +10,40 @@ def test_legacy_document_arguments_are_rejected():
         main.build_parser().parse_args(["--doc", "auth.md", "--dry-run"])
 
 
+def test_missing_command_is_rejected():
+    with pytest.raises(SystemExit):
+        main.build_parser().parse_args([])
+
+
 def test_generate_docs_command_is_explicitly_supported():
     args = main.build_parser().parse_args(["generate-docs", "--doc", "auth.md", "--dry-run"])
 
     assert args.command == "generate-docs"
     assert args.doc == "auth.md"
     assert args.dry_run
+
+
+def test_generate_load_tests_command_is_supported():
+    args = main.build_parser().parse_args(
+        [
+            "generate-load-tests",
+            "--openapi",
+            "docs/openapi.json",
+            "--journey",
+            "QA-101,QA-104",
+            "--journey",
+            "QA-201",
+            "--vus",
+            "10",
+            "--base-url",
+            "https://api.example.test",
+        ]
+    )
+
+    assert args.command == "generate-load-tests"
+    assert args.journey == ["QA-101,QA-104", "QA-201"]
+    assert args.vus == 10
+    assert args.base_url == "https://api.example.test"
 
 
 def test_process_document_marks_document_as_processed(tmp_path, monkeypatch):
