@@ -10,6 +10,11 @@ def test_legacy_document_arguments_are_rejected():
         main.build_parser().parse_args(["--doc", "auth.md", "--dry-run"])
 
 
+def test_missing_command_is_rejected():
+    with pytest.raises(SystemExit):
+        main.build_parser().parse_args([])
+
+
 def test_generate_docs_command_is_explicitly_supported():
     args = main.build_parser().parse_args(["generate-docs", "--doc", "auth.md", "--dry-run"])
 

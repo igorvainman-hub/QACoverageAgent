@@ -25,10 +25,10 @@ QA_BASE_PATH=MyProject
 QA_TCID_PREFIX=QA
 ```
 
-3. Запустите полный анализ по всем документам:
+3. Запустите полный анализ по всем документам через явный режим:
 
 ```bash
-python -m src.main
+python -m src.main generate-docs
 ```
 
 4. Обработайте только один документ через явный режим:
@@ -40,13 +40,13 @@ python -m src.main generate-docs --doc payment_feature.md
 5. Выполните сухой прогон без записи новых кейсов:
 
 ```bash
-python -m src.main --dry-run
+python -m src.main generate-docs --dry-run
 ```
 
 6. Для подробного вывода:
 
 ```bash
-python -m src.main --verbose
+python -m src.main generate-docs --verbose
 ```
 
 ## Генерация API-тестов
