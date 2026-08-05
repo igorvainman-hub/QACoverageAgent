@@ -1,51 +1,51 @@
 ﻿# QA Coverage Agent
 
-CLI-проект для анализа покрытия функциональности по документации, выявления пробелов и генерации готовых тест-артефактов для Xray, API-автотестов и k6 load-путей.
+CLI project for analyzing functional coverage from documentation, identifying gaps, and generating ready-to-use test artifacts for Xray, API tests, and k6 load paths.
 
-## Что делает проект
+## What the project does
 
-Проект умеет три основных сценария:
+The project supports three main scenarios:
 
-1. Генерация ручных Xray-кейсов из Markdown-документов
-   - читает файлы из папки `docs/`
-   - сопоставляет сценарии с текущими кейсами в `checklist.csv`
-   - находит пробелы в покрытии
-   - создаёт новые тест-кейсы и обновляет `.state/system_overview.md`
+1. Manual Xray test case generation from Markdown documents
+   - reads files from the `docs/` folder
+   - maps scenarios to existing cases in `checklist.csv`
+   - identifies coverage gaps
+   - creates new test cases and updates `.state/system_overview.md`
 
-2. Генерация API-автотестов на Playwright
-   - берёт кейсы из `checklist.csv` с меткой `api`
-   - анализирует OpenAPI-спецификацию
-   - создаёт клиентов по `tags`
-   - генерирует спецификации под `automation/api`
+2. API test generation with Playwright
+   - reads cases from `checklist.csv` tagged with `api`
+   - analyzes the OpenAPI specification
+   - creates clients by `tags`
+   - generates specs under `automation/api`
 
-3. Генерация k6 load-тестов по journey
-   - принимает набор TCID в нужном порядке выполнения
-   - маппит их на endpoints из OpenAPI
-   - создаёт один или несколько k6-скриптов и markdown-отчётов
+3. k6 load-test generation from journeys
+   - accepts a set of TCIDs in the required execution order
+   - maps them to endpoints from OpenAPI
+   - creates one or more k6 scripts and markdown reports
 
-## Архитектура
+## Architecture
 
-Главные модули:
+Main modules:
 
-- `src/main.py` — точка входа CLI
-- `src/app/pipeline.py` — pipeline обработки документа и сохранения state
-- `src/agents/` — агенты для покрытия, дизайна тестов, OpenAPI и load-генерации
-- `src/config.py` — загрузка runtime-конфигурации
-- `src/llm_client.py` — обёртка над LLM
-- `src/document_parser.py` — разбор документов
-- `src/csv_writer.py` — запись и валидация Xray-кейсов
+- `src/main.py` — CLI entry point
+- `src/app/pipeline.py` — document processing pipeline and state persistence
+- `src/agents/` — agents for coverage, test design, OpenAPI, and load generation
+- `src/config.py` — runtime configuration loading
+- `src/llm_client.py` — LLM wrapper
+- `src/document_parser.py` — document parsing
+- `src/csv_writer.py` — Xray case writing and validation
 
-## Быстрый старт
+## Quick start
 
-### 1. Установка зависимостей
+### 1. Install dependencies
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-### 2. Настройка окружения
+### 2. Configure the environment
 
-Создайте файл `.env`:
+Create an `.env` file:
 
 ```env
 OPENAI_API_KEY=sk-...
@@ -53,60 +53,60 @@ QA_BASE_PATH=MyProject
 QA_TCID_PREFIX=QA
 ```
 
-### 3. Команды CLI
+### 3. CLI commands
 
-#### Генерация ручных тест-кейсов по документам
+#### Generate manual test cases from documents
 
 ```bash
 python -m src.main generate-docs
 ```
 
-Или только один документ:
+Or just one document:
 
 ```bash
 python -m src.main generate-docs --doc payment_feature.md
 ```
 
-Сухой прогон:
+Dry run:
 
 ```bash
 python -m src.main generate-docs --dry-run
 ```
 
-Подробный вывод:
+Verbose output:
 
 ```bash
 python -m src.main generate-docs --verbose
 ```
 
-#### Генерация API-автотестов
+#### Generate API tests
 
-Чтобы генерация сработала на реальных данных, в `checklist.csv` должен быть хотя бы один кейс с меткой `API` или `Smoke;API`.
+To work on real data, `checklist.csv` must contain at least one case tagged with `API` or `Smoke;API`.
 
-Примеры:
+Examples:
 
 ```bash
 python -m src.main generate-tests --openapi docs/openapi.json --output-dir automation/api
 python -m src.main generate-tests --openapi docs/openapi.json --dry-run --verbose
 ```
 
-Что делает этот режим:
+What this mode does:
 
-- читает OpenAPI-спецификацию
-- создаёт клиентов по `tags`
-- генерирует Playwright-спеки
-- добавляет `fixtures/auth.ts` и `coverage-report.md` при необходимости
+- reads the OpenAPI specification
+- creates clients by `tags`
+- generates Playwright specs
+- adds `fixtures/auth.ts` and `coverage-report.md` when needed
 
-Ограничения:
+Limitations:
 
-- поддерживаются только JSON-спецификации OpenAPI
-- публичные URL разрешены только для открытых HTTP(S) ресурсов
-- loopback, private, link-local, reserved и redirect-адреса блокируются
-- для внутреннего API лучше передавать локальный JSON-файл
+- only OpenAPI JSON specifications are supported
+- public URLs are allowed only for open HTTP(S) resources
+- loopback, private, link-local, reserved, and redirect addresses are blocked
+- for internal APIs, it is better to pass a local JSON file
 
-#### Генерация k6 load-тестов
+#### Generate k6 load tests
 
-Команда создаёт один или несколько k6-скриптов для линейных API-journeys.
+This command creates one or more k6 scripts for linear API journeys.
 
 ```bash
 python -m src.main generate-load-tests --openapi docs/openapi.json --journey QA-API-001,QA-API-003 --base-url http://testURL --vus 150 --duration 4m --output-dir automation/load
@@ -115,29 +115,29 @@ python -m src.main generate-load-tests --openapi docs/openapi.json --journey QA-
 python -m src.main generate-load-tests --openapi docs/openapi.json --journey QA-101,QA-104 --journey QA-201,QA-220
 ```
 
-Правила:
+Rules:
 
-- TCID должны уже существовать в `checklist.csv`
-- порядок TCID должен быть точным порядком выполнения
-- каждый `--journey` создаёт независимый сценарий
-- если один journey не сгенерировался, остальные могут быть созданы, но команда завершится с ненулевым кодом
+- TCIDs must already exist in `checklist.csv`
+- the order of TCIDs must be the exact execution order
+- each `--journey` creates an independent scenario
+- if one journey is not generated, the others may still be created, but the command will exit with a non-zero status
 
-Результат:
+Result:
 
 - `automation/load/journeys/<journey>.js`
-- краткий markdown-отчёт рядом с сценарием
+- a concise markdown report next to the scenario
 
-Важные нюансы:
+Important notes:
 
-- если в OpenAPI нет `servers[0].url`, в скрипт подставляется `TODO-BASE-URL`
-- в генерируемом коде остаются `TODO` для path parameters и зависимостей между шагами
-- автоматического связывания ответа одного request с параметрами следующего шага нет
+- if `servers[0].url` is missing in the OpenAPI document, `TODO-BASE-URL` is inserted into the script
+- generated code still contains `TODO` markers for path parameters and dependencies between steps
+- there is no automatic binding of one request response to the parameters of the next step
 
-#### Настройка thresholds для k6
+#### Configure k6 thresholds
 
-Если `--thresholds` не передан, в скрипт добавляется placeholder SLA-подсказка.
+If `--thresholds` is omitted, a placeholder SLA hint is added to the script.
 
-Пример `k6-thresholds.json`:
+Example `k6-thresholds.json`:
 
 ```json
 {
@@ -146,34 +146,34 @@ python -m src.main generate-load-tests --openapi docs/openapi.json --journey QA-
 }
 ```
 
-## Что хранится в проекте
+## What is stored in the project
 
-- `docs/` — входная документация
-- `checklist.csv` — основной список Xray-кейсов
-- `.state/state.json` — метаданные обработки документов
-- `.state/system_overview.md` — обновляемый системный overview
-- `automation/api/` — сгенерированные Playwright API-автотесты
-- `automation/load/` — сгенерированные k6-journeys и отчёты
+- `docs/` — input documentation
+- `checklist.csv` — the main Xray test case list
+- `.state/state.json` — document processing metadata
+- `.state/system_overview.md` — updated system overview
+- `automation/api/` — generated Playwright API tests
+- `automation/load/` — generated k6 journeys and reports
 
-## Переменные окружения
+## Environment variables
 
-- `OPENAI_API_KEY` — ключ OpenAI
-- `QA_BASE_PATH` — базовый путь для Xray Test Repository Path
-- `QA_TCID_PREFIX` — префикс для TCID, например `QA`
+- `OPENAI_API_KEY` — OpenAI API key
+- `QA_BASE_PATH` — base path for Xray Test Repository Path
+- `QA_TCID_PREFIX` — TCID prefix, for example `QA`
 
-## Примечания
+## Notes
 
-- если документ не менялся, он будет пропущен при следующем запуске
-- при наличии некорректных или неполных сгенерированных кейсов они будут пропущены с предупреждением
-- проект хранит состояние по содержимому документа и повторно не обрабатывает уже актуальный файл
+- if a document has not changed, it will be skipped on the next run
+- if invalid or incomplete generated cases are present, they will be skipped with a warning
+- the project stores state by document content and does not reprocess an already up-to-date file
 
-## Требования
+## Requirements
 
 - Python 3.9+
-- доступ к OpenAI API
-- папка `docs/` с описанием функций и сценариев
+- access to the OpenAI API
+- the `docs/` folder with functional and scenario descriptions
 
-## Проверка
+## Verification
 
 ```bash
 py -m pytest -q

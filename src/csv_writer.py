@@ -69,7 +69,7 @@ def append_cases(path: Path, cases: list[GeneratedTestCase], prefix: str, base_p
 
         error = validate_case(case)
         if error:
-            print(f"[WARNING] Пропущен невалидный кейс '{case.summary[:60]}...': {error}")
+            print(f"[WARNING] Skipped invalid test case '{case.summary[:60]}...': {error}")
             skipped += 1
             continue
 
@@ -85,5 +85,5 @@ def append_cases(path: Path, cases: list[GeneratedTestCase], prefix: str, base_p
         writer.writerows(rows_to_write)
 
     if skipped:
-        print(f"[WARNING] Всего пропущено невалидных кейсов: {skipped}")
+        print(f"[WARNING] Total invalid test cases skipped: {skipped}")
     return tcids
