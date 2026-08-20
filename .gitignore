@@ -44,8 +44,3 @@ checklist.csv
 docs/*
 !docs/.gitkeep
 automation/
-<<<<<<< HEAD
-
-=======
->>>>>>> k6_module
-
