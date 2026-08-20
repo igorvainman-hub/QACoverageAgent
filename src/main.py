@@ -35,7 +35,7 @@ SUPPORTED = {".md", ".txt", ".doc", ".csv"}
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Generate Xray-ready tests for genuine documentation coverage gaps.")
-    subparsers = parser.add_subparsers(dest="command")
+    subparsers = parser.add_subparsers(dest="command", required=True)
     docs_parser = subparsers.add_parser("generate-docs", help="generate manual Xray test cases from documentation")
     docs_parser.add_argument("--doc", help="one document path relative to docs/")
     docs_parser.add_argument("--dry-run", action="store_true")

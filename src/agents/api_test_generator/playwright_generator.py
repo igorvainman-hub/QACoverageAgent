@@ -48,6 +48,10 @@ def generate_playwright_files(
 
 def _client_source(client_name: str, endpoints: object) -> str:
     methods = "\n\n".join(_client_method(endpoint) for endpoint in endpoints)
+    return _render_client_source(client_name, methods)
+
+
+def _render_client_source(client_name: str, methods: str) -> str:
     return f'import {{ APIRequestContext, APIResponse }} from "@playwright/test";\n\nexport class {client_name} {{\n  constructor(private readonly request: APIRequestContext) {{}}\n\n{methods}\n}}\n'
 
 
@@ -62,28 +66,30 @@ def _test_source(match: EndpointMatch, case: GeneratedTestCase, endpoint: OpenAP
     summary = case.summary.replace("\n", " ").replace("'", "\\'")
     path_params = _path_params(endpoint.path)
     request_body = _example_body(endpoint.request_schema)
-    setup = []
-    if path_params:
-        setup.append(f"  const pathParams: Record<string, string> = {json.dumps(path_params)};")
-    else:
-        setup.append("  const pathParams: Record<string, string> = {};")
-    if request_body is not None:
-        setup.append(f"  // TODO: replace generated request data with a valid fixture for this scenario.")
-        setup.append(f"  const requestBody = {json.dumps(request_body, ensure_ascii=False)};")
+    setup = _render_test_setup(path_params, request_body)
     call = f"client.{method}(pathParams" + (", requestBody" if request_body is not None else "") + ")"
-    steps = []
-    for index, step in enumerate(case.steps, start=1):
-        title = _ts_string(f"{index}. {step.action}")
-        data = f"    // Data: {step.data}" if step.data else "    // Data: none"
-        expected = f"    // Expected result: {step.expected_result}"
-        action = f"    response = await {call};" if index == 1 else "    // The API request is issued in the first checklist step."
-        steps.append(f"  await test.step('{title}', async () => {{\n{data}\n{expected}\n{action}\n  }});")
+    steps = _render_test_steps(case, call)
     response_assertions = _response_assertions(endpoint.response_schema)
     multi_step_todo = (
         "  // TODO: This checklist case has multiple steps. Add and validate the additional API calls for the full workflow.\n"
         if len(case.steps) > 1
         else ""
     )
+    return _render_test_source(match, case, summary, client_name, client_file, test_import, setup, multi_step_todo, steps, response_assertions)
+
+
+def _render_test_source(
+    match: EndpointMatch,
+    case: GeneratedTestCase,
+    summary: str,
+    client_name: str,
+    client_file: str,
+    test_import: str,
+    setup: list[str],
+    multi_step_todo: str,
+    steps: list[str],
+    response_assertions: str,
+) -> str:
     return "".join(
         [
             f'import {{ test, expect }} from "{test_import}";\n',
@@ -102,7 +108,33 @@ def _test_source(match: EndpointMatch, case: GeneratedTestCase, endpoint: OpenAP
     )
 
 
+def _render_test_setup(path_params: dict[str, str], request_body: object | None) -> list[str]:
+    if path_params:
+        setup = [f"  const pathParams: Record<string, string> = {json.dumps(path_params)};"]
+    else:
+        setup = ["  const pathParams: Record<string, string> = {};"]
+    if request_body is not None:
+        setup.append("  // TODO: replace generated request data with a valid fixture for this scenario.")
+        setup.append(f"  const requestBody = {json.dumps(request_body, ensure_ascii=False)};")
+    return setup
+
+
+def _render_test_steps(case: GeneratedTestCase, call: str) -> list[str]:
+    steps = []
+    for index, step in enumerate(case.steps, start=1):
+        title = _ts_string(f"{index}. {step.action}")
+        data = f"    // Data: {step.data}" if step.data else "    // Data: none"
+        expected = f"    // Expected result: {step.expected_result}"
+        action = f"    response = await {call};" if index == 1 else "    // The API request is issued in the first checklist step."
+        steps.append(f"  await test.step('{title}', async () => {{\n{data}\n{expected}\n{action}\n  }});")
+    return steps
+
+
 def _auth_fixture(security_schemes: dict[str, object]) -> str:
+    return _render_auth_fixture(security_schemes)
+
+
+def _render_auth_fixture(security_schemes: dict[str, object]) -> str:
     names = ", ".join(f"AUTH_{_slug(name).upper()}" for name in security_schemes)
     return f'// TODO: implement authentication for OpenAPI security schemes. Required environment variables: {names}\nexport {{ test, expect }} from "@playwright/test";\n'
 
