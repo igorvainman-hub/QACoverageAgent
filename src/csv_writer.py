@@ -32,21 +32,40 @@ def next_tcid(path: Path, prefix: str) -> int:
     return highest + 1
 
 
+def _normalize_repo_path(path_value: str, base_path: str) -> str:
+    repo_path = path_value.strip("/")
+    base_prefix = base_path.strip("/")
+    if not repo_path.startswith(base_prefix):
+        repo_path = f"{base_prefix}/{repo_path}"
+    return repo_path
+
+
+def _row_for_case(case: GeneratedTestCase, repo_path: str, tcid: str, step_index: int, step) -> dict[str, str]:
+    return {
+        "TCID": tcid if step_index == 0 else "",
+        "Test Summary": case.summary if step_index == 0 else "",
+        "Description": case.description if step_index == 0 else "",
+        "Test Type": "Manual" if step_index == 0 else "",
+        "Test Repository Path": repo_path if step_index == 0 else "",
+        "Label": ";".join(case.labels) if step_index == 0 else "",
+        "Action": step.action,
+        "Data": step.data or "",
+        "Expected Result": step.expected_result,
+    }
+
+
 def append_cases(path: Path, cases: list[GeneratedTestCase], prefix: str, base_path: str) -> list[str]:
     path.parent.mkdir(parents=True, exist_ok=True)
     start = next_tcid(path, prefix)
     new_file = not path.exists() or path.stat().st_size == 0
     tcids: list[str] = []
     skipped = 0
-    rows_to_write: list[dict] = []
+    rows_to_write: list[dict[str, str]] = []
 
     tcid_counter = start
     for case in cases:
-        # Paths supplied by the model are relative feature paths.
-        repo_path = case.test_repository_path.strip("/")
-        if not repo_path.startswith(base_path.strip("/")):
-            repo_path = f"{base_path.strip('/')}/{repo_path}"
-        case.test_repository_path = repo_path  # normalize before validating
+        repo_path = _normalize_repo_path(case.test_repository_path, base_path)
+        case.test_repository_path = repo_path
 
         error = validate_case(case)
         if error:
@@ -57,16 +76,7 @@ def append_cases(path: Path, cases: list[GeneratedTestCase], prefix: str, base_p
         tcid = f"{prefix}-{tcid_counter:03d}"
         tcid_counter += 1
         tcids.append(tcid)
-        for index, step in enumerate(case.steps):
-            rows_to_write.append({
-                "TCID": tcid if index == 0 else "",
-                "Test Summary": case.summary if index == 0 else "",
-                "Description": case.description if index == 0 else "",
-                "Test Type": "Manual" if index == 0 else "",
-                "Test Repository Path": repo_path if index == 0 else "",
-                "Label": ";".join(case.labels) if index == 0 else "",
-                "Action": step.action, "Data": step.data or "", "Expected Result": step.expected_result,
-            })
+        rows_to_write.extend(_row_for_case(case, repo_path, tcid, index, step) for index, step in enumerate(case.steps))
 
     with path.open("a", encoding="utf-8", newline="") as target:
         writer = csv.DictWriter(target, fieldnames=HEADERS, quoting=csv.QUOTE_MINIMAL)

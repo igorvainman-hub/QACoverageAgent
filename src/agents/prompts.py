@@ -56,3 +56,12 @@ Write 3-5 sentences covering, in this order:
 
 Return only the section body as plain Markdown starting with '## {feature}'.
 """
+
+ENDPOINT_MATCH_PROMPT = """
+Match each API-labeled manual test case to at most one endpoint from the supplied OpenAPI endpoint catalogue.
+
+Use the test summary, description, and steps to determine the best matching operation. Mark a case as
+unmatched when the catalogue does not provide enough evidence. Never invent methods, paths, or operation IDs:
+only select values present in the catalogue. Use high confidence only for an unambiguous match. Keep reasoning
+short and explain either the match or why the case could not be mapped.
+"""
